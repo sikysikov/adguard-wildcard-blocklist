@@ -68,6 +68,27 @@ job ran. Runs that find no change leave the file completely untouched, so the
 commit history stays meaningful. To confirm the job is alive, look at the
 [Actions tab](../../actions).
 
+## Which source, and why
+
+`filter_1.txt` from AdGuard's [HostlistsRegistry][registry] — catalogue entry 1,
+"AdGuard DNS filter". It is assembled from AdGuard's Base, Social Media,
+Tracking Protection and Mobile Ads filters plus EasyList and EasyPrivacy, then
+simplified for DNS-level blocking. Upstream is [AdguardSDNSFilter][filter],
+compiled with AdGuard's own hostlist-compiler and refreshed several times a day.
+
+The widely used firebog mirror (`v.firebog.net/hosts/AdguardDNS.txt`) carries the
+same filter, but pulls it from the *browser-extension* channel
+(`filters.adtidy.org/extension/chromium/filters/15.txt`). Compared rule by rule
+the two agree on 161 297 entries and differ on 26 — entirely a matter of which
+refreshed last, not of content. This repository reads the registry endpoint
+because that is the channel AdGuard publishes for hostlist consumers; the
+extension path is versioned for the extension and can move independently of it.
+
+Worth knowing before you add this list: against the firebog-derived AdGuard list
+most setups already run, **99.6 % of the domains are ones you already block**.
+The gain here is not coverage of new domains, it is that those 160 716 shared
+entries start covering their subdomains too.
+
 ## What is not converted
 
 Only plain `||domain^` rules map cleanly onto `*.domain`. Everything else is
@@ -187,6 +208,7 @@ The conversion script and workflow are MIT licensed — see [LICENSE](LICENSE).
 stays under that licence. All credit for the filtering data belongs to the
 AdGuard team and its contributors. This repository only changes the syntax.
 
-[filter]: https://github.com/AdguardTeam/AdguardFilters
+[filter]: https://github.com/AdguardTeam/AdguardSDNSFilter
 [adguardteam]: https://github.com/AdguardTeam
 [cebeerre]: https://github.com/Cebeerre/dnsblocklists
+[registry]: https://github.com/AdguardTeam/HostlistsRegistry
