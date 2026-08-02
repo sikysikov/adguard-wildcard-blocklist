@@ -50,6 +50,38 @@ converts AdGuard's *services* lists and NRD feeds, not the main DNS filter, and
 AdGuard's own Hostlist Compiler only emits adblock syntax — its `Compress`
 transformation runs the other way (hosts → adblock).
 
+### The case that prompted this: OPNsense
+
+OPNsense offers an **"AdGuard List"** among the built-in blocklists of its
+Unbound DNSBL. Enabling it does not get you AdGuard's wildcard coverage, because
+the entry points at the firebog mirror (`v.firebog.net/hosts/AdguardDNS.txt`),
+which has already flattened `||example.com^` down to a bare `example.com`. The
+wildcard half of every rule is gone before OPNsense ever sees the file, and it
+cannot be recovered afterwards.
+
+OPNsense reports this itself. It logs a per-file summary on every blocklist
+rebuild, and the built-in AdGuard entry loads without a single wildcard:
+
+```
+blocklist: https://v.firebog.net/hosts/AdguardDNS.txt   (block: 160722  wildcard: 0)
+blocklist: <this list>                                  (block: 161299  wildcard: 161299)
+```
+
+The other built-ins are not affected, because their upstreams publish a
+wildcard-domain format directly — OISD as `big.oisd.nl/domainswild`, hagezi as
+`wildcard/pro.txt` — and those load at 100 % wildcard:
+
+```
+blocklist: https://big.oisd.nl/domainswild              (block: 430073  wildcard: 430073)
+blocklist: .../hagezi/dns-blocklists/main/wildcard/pro.txt (block: 216579 wildcard: 216579)
+```
+
+So this is not an OPNsense defect. Its parser accepts a leading `*.` and honours
+it at match time; it uses the wildcard format wherever an upstream offers one.
+AdGuard is the exception: it publishes adblock syntax, which the DNSBL cannot
+parse, and hosts-format mirrors, which are lossy. There was no wildcard-domain
+distribution to point at. That is the gap this repository fills.
+
 ## What you get
 
 The file carries a hagezi-style header, so the list's age is visible without
@@ -185,6 +217,12 @@ was actually checked. Verified by observation:
   produced no commit.
 - **The apex claim above was verified against OPNsense's source**, not assumed —
   the matching code and its test suite, not the documentation.
+- **The list runs on a live OPNsense installation.** Its own rebuild log reports
+  161 299 of 161 300 entries loaded as wildcards, and random labels under
+  domains from the list resolve to `0.0.0.0` while unrelated domains resolve
+  normally. A random label cannot appear in any blocklist, so only wildcard
+  logic can explain the block. The one entry OPNsense drops is `*.23.224.89.2`,
+  whose single-character final label its domain pattern rejects.
 
 Known gaps, stated plainly:
 
