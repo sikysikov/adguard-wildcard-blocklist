@@ -1,0 +1,5 @@
+# Authored on Windows, executed on Linux and consumed by DNS resolvers.
+# Without this, CRLF would reach the runner and break the shebang in convert.sh.
+* text=auto eol=lf
+*.sh text eol=lf
+*.txt text eol=lf
